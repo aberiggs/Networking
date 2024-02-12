@@ -19,6 +19,11 @@ int main(int argc, char *argv[]) {
         std::cerr << "usage: client hostname message\n";
         return -1;
     }
+    
+    std::string hostname {argv[1]};
+    if (hostname == "localhost")
+        hostname = "127.0.0.1";
+    
 
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
         std::cerr << "Error creating socket.\n";
@@ -28,7 +33,7 @@ int main(int argc, char *argv[]) {
     server_address.sin_family = AF_INET;
     server_address.sin_port = htons(port);
 
-    if (inet_pton(AF_INET, argv[1], &server_address.sin_addr) <= 0) {
+    if (inet_pton(AF_INET, hostname.c_str(), &server_address.sin_addr) <= 0) {
         std::cerr << "Invalid address\n";
         return -1;
     }
@@ -40,7 +45,7 @@ int main(int argc, char *argv[]) {
     
     send(sockfd, argv[2], strlen(argv[1]), 0);
     
-    read(sockfd, buffer, sizeof(buffer) - 1);
+    recv(sockfd, buffer, sizeof(buffer) - 1, 0);
 
     std::cout << "Server sent back: " << buffer << "\n";
 

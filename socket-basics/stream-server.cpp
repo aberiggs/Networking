@@ -1,4 +1,4 @@
-/* Basic echo server created to learn socket programming */
+/* Basic server created to learn socket programming */
 
 #include <iostream>
 #include <string>
@@ -44,7 +44,7 @@ int main() {
         client_fd = accept(server_fd, (sockaddr *)&client_address, &address_size);
 
         // Read message from client
-        read(client_fd, buffer, sizeof(buffer)-1);
+        recv(client_fd, buffer, sizeof(buffer)-1, 0);
         // Ensure null terminator exists at end of string
         buffer[sizeof(buffer)-1] = '\0';
 
