@@ -42,9 +42,22 @@ int main() {
         // Accept incoming connection
         client_fd = accept(server_fd, (sockaddr *)&client_address, &address_size);
 
+        // Get length of file name
+        std::size_t filename_length {0};
+        recv(client_fd, &filename_length, sizeof(filename_length), 0);
+        filename_length = ntohl(filename_length);
+
+        // Get file name
+        char *c_filename = new char[filename_length + 1];
+        recv(client_fd, c_filename, filename_length, 0);
+        c_filename[filename_length] = '\0';
+
+        // Concat folder path to filename
+        std::string filename {"storage/"};
+        filename.append(c_filename);
         
         // Open file for writing
-        FILE* file = fopen("storage/transfer_file", "wb");
+        FILE* file = fopen(filename.c_str(), "wb");
         if (file == nullptr) {
             std::cout << "Failed to open file for writing\n";
             std::string resp {"Server: Failure writing file"};
@@ -61,12 +74,9 @@ int main() {
         std::size_t bytes_read {0};
         std::size_t total_read {0};
         while (file_size > total_read && (bytes_read = recv(client_fd, buf, sizeof(buf), 0)) > 0) {
-            std::cout << "Receiving " << bytes_read << " bytes\n";
             fwrite(buf, sizeof(char), bytes_read, file);
             total_read += bytes_read;
         }
-
-        std::cout << "Finished writing\n";
 
         fclose(file);
 

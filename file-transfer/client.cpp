@@ -1,4 +1,4 @@
-/* Basic client created to learn socket programming */
+/* Basic client modified for sending files */
 
 #include <iostream>
 #include <string>
@@ -43,12 +43,25 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
+    // Open file
     FILE* file = fopen(argv[2], "rb");
     if (file == nullptr) {
         std::cerr << "Failed to open file\n";
         return -1;
     }   
 
+    // Get and send info about file name
+    std::string filename { argv[2] };
+    std::size_t start_of_filename {filename.find_last_of("/")};
+    if (start_of_filename != std::string::npos) {
+        filename = filename.substr(start_of_filename + 1, filename.size());
+    }
+    std::cout << "Filename of selected file: " << filename << "\n";
+    std::size_t filename_length {htonl(filename.size())};
+    send(sockfd, &filename_length, sizeof(filename_length), 0);
+    send(sockfd, filename.c_str(), filename.size(), 0);
+
+    // Get and send info about size of file
     fseek(file, 0, SEEK_END);
     std::size_t file_size {static_cast<std::size_t>(htonl(ftell(file)))};
     send(sockfd, &file_size, sizeof(file_size), 0);
@@ -57,11 +70,8 @@ int main(int argc, char *argv[]) {
     char buf[1024] {0};
     std::size_t bytes_read {0};
     while ((bytes_read = fread(buf, sizeof(char), sizeof(buf), file)) > 0) {
-        std::cout << "Sending " << bytes_read << " bytes\n";
         send(sockfd, buf, bytes_read, 0);
     }
-
-    std::cout << "Finished sending file data\n";
 
     char resp[100] {0};
     recv(sockfd, resp, sizeof(resp), 0);
